@@ -23,33 +23,56 @@ class DataPreprocessStrategy(DataStrategy):
         """
         Preprocess Data
         """
-        try:
-            data = data.drop(
-                [
-                    "order_approved_at",
-                    "order_delivered_carrier_date",
-                    "order_delivered_customer_date",
-                    "order_estimated_delivery_date",
-                    "order_purchase_timestamp",
-                ],
-                axis=1)
+        import logging
 
-            data['product_weight_g'].fillna(data['product_weight_g'].median(), inplace=True)
-            data['product_length_cm'].fillna(data['product_length_cm'].median(), inplace=True)
-            data['product_height_cm'].fillna(data['product_height_cm'].median(), inplace=True)
-            data['product_width_cm'].fillna(data['product_width_cm'].median(), inplace=True)
-            data['review_comment_message'].fillna('No review', inplace=True)
+class DataPreprocessStrategy(DataStrategy):
+    """
+    Strategy for preprocessing data
+    """
+
+    def handle_data(self, data):
+        """
+        Preprocess Data
+        """
+        try:            
+            columns_to_drop = [
+                "order_approved_at",
+                "order_delivered_carrier_date",
+                "order_delivered_customer_date",
+                "order_estimated_delivery_date",
+                "order_purchase_timestamp",
+            ]
+            
+            columns_to_drop = [col for col in columns_to_drop if col in data.columns]
+            
+            if columns_to_drop:
+                data = data.drop(columns=columns_to_drop, axis=1)
+            else:
+                logging.warning("No columns to drop. Check if columns exist.")
+            
+            columns_to_fill = {
+                'product_weight_g': data['product_weight_g'].median() if 'product_weight_g' in data.columns else None,
+                'product_length_cm': data['product_length_cm'].median() if 'product_length_cm' in data.columns else None,
+                'product_height_cm': data['product_height_cm'].median() if 'product_height_cm' in data.columns else None,
+                'product_width_cm': data['product_width_cm'].median() if 'product_width_cm' in data.columns else None,
+                'review_comment_message': 'No review' if 'review_comment_message' in data.columns else None
+            }
+
+            for column, value in columns_to_fill.items():
+                if value is not None:
+                    data[column] = data[column].fillna(value)
 
             data = data.select_dtypes(include=[np.number])
 
             cols_to_drop = ['customer_zip_code_prefix', 'order_item_id']
-            data = data.drop(cols_to_drop, axis=1)
+            data = data.drop(cols_to_drop, axis=1, errors='ignore')
 
             return data
-    
+
         except Exception as e:
             logging.error(f"Error in data preprocessing: {e}")
             raise e
+
 
 class DataSplitStrategy(DataStrategy):
     """
@@ -83,9 +106,5 @@ class DataCleaner:
         Handle data using the strategy.
         """
         return self.strategy.handle_data(self.data)
-    
-# if __name__ == "__main__":
-#     data = pd.read_csv("data/olist_order_items_dataset.csv")
-#     data_cleaner = DataCleaner(data, DataPreprocessStrategy())
-#     cleaned_data = data_cleaner.handle_data()
+
     

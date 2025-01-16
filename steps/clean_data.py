@@ -28,10 +28,12 @@ def clean_data(df: pd.DataFrame) -> Tuple[Annotated[pd.DataFrame, 'X_train'],
         split_strategy = DataSplitStrategy()
         data_cleaner = DataCleaner(processed_data, split_strategy)
 
+        logging.info("Data cleaning and preprocessing complete.")
+        
         X_train, X_test, y_train, y_test = data_cleaner.handle_data()
 
-        logging.info("Data cleaning and preprocessing complete.")
-    
+        return X_train, X_test, y_train, y_test
+
     except Exception as e:
         logging.error(f"Error in cleaning data: {e}")
         raise e
