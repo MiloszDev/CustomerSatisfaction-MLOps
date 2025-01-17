@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 import pandas as pd
 
 from abc import ABC, abstractmethod
@@ -39,7 +40,7 @@ class LinearRegressionModel(Model):
         """
         try:
             reg = LinearRegression(**kwargs)
-            reg.fit(X_train, y_train)
+            reg.fit(X_train, y_train.to_numpy().flatten())
             
             logging.info("Training Linear Regression model.")
 
@@ -65,7 +66,7 @@ class RandomForestRegressorModel(Model):
         """
         try:
             reg = RandomForestRegressor(**kwargs)
-            reg.fit(X_train, y_train)
+            reg.fit(X_train, y_train.to_numpy().flatten())
             
             logging.info("Training Random Forest Regressor model.")
 

@@ -4,6 +4,7 @@ import pandas as pd
 
 from typing import Union
 from abc import ABC, abstractmethod
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 
 class DataStrategy(ABC):
@@ -20,6 +21,9 @@ class DataPreprocessStrategy(DataStrategy):
     def process_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """Clean and preprocess the data."""
         try:
+            data['deliver_time'] = (pd.to_datetime(data['order_delivered_customer_date']) - pd.to_datetime(data['order_purchase_timestamp'])).dt.days
+            data['product_volume'] = data['product_length_cm'] * data['product_height_cm'] * data['product_width_cm']
+
             data = self.drop_columns(data)
             data = self.fill_missing_values(data)
             return self.select_numerical_data(data)
@@ -28,16 +32,21 @@ class DataPreprocessStrategy(DataStrategy):
             raise e
     
     def drop_columns(self, data: pd.DataFrame) -> pd.DataFrame:
-        columns_to_drop = ["order_approved_at", "order_delivered_carrier_date", ...]
-        return data.drop(columns=columns_to_drop, axis=1, errors='ignore')
+        data.drop(columns=['order_id', 'customer_id', 'order_item_id', 'order_approved_at', 'order_delivered_carrier_date', 'order_estimated_delivery_date', 'review_comment_message'], inplace=True, errors='ignore')
+        return data
 
     def fill_missing_values(self, data: pd.DataFrame) -> pd.DataFrame:
-        columns_to_fill = {
-            'product_weight_g': data['product_weight_g'].median(),
-            'review_comment_message': 'No review'
-        }
-        for column, value in columns_to_fill.items():
-            data[column] = data[column].fillna(value)
+        cols_to_fill = ['product_weight_g', 'product_length_cm', 'product_height_cm', 'product_width_cm']
+        
+        for col in cols_to_fill:
+            data[col] = data[col].fillna(data[col].median()) 
+        
+        if 'order_delivered_carrier_date' in data.columns:
+            data['order_delivered_carrier_date'] = data['order_delivered_carrier_date'].fillna(pd.NaT)
+        
+        if 'order_delivered_customer_date' in data.columns:
+            data['order_delivered_customer_date'] = data['order_delivered_customer_date'].fillna(pd.NaT)
+        
         return data
 
     def select_numerical_data(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -50,7 +59,9 @@ class DataSplitStrategy(DataStrategy):
 
     def process_data(self, data: pd.DataFrame) -> Union[pd.DataFrame, pd.Series]:
         try:
-            X = data.drop('review_score', axis=1)
+            imputer = SimpleImputer(strategy='mean')
+            
+            X = pd.DataFrame(imputer.fit_transform(data.drop('review_score', axis=1)))
             y = data['review_score']
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)

@@ -19,7 +19,7 @@ class IngestData:
         Ingesting the data from the data_path.
         """
         logging.info(f'Ingesting data from: {self.data_path}')
-        return pd.read_csv(self.data_path, index_col=0, parse_dates=True, data_parser=lambda x:pd.to_datetime(x, format='%Y-%m-%d'))
+        return pd.read_csv(self.data_path, index_col=0, parse_dates=['order_delivered_carrier_date','order_delivered_customer_date','order_estimated_delivery_date', 'shipping_limit_date'])
 
 @step
 def ingest_data(data_path: str) -> pd.DataFrame:

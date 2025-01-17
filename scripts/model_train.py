@@ -2,6 +2,7 @@ import logging
 import pandas as pd
 
 from zenml import step
+from joblib import dump
 from scripts.config import ModelNameConfig
 from sklearn.base import RegressorMixin
 from src.models import LinearRegressionModel, RandomForestRegressorModel
@@ -23,13 +24,19 @@ def train_model(X_train: pd.DataFrame,
         if config.model_name == 'LinearRegression':
             model = LinearRegressionModel()
             model = model.train(X_train, y_train)
+
+            dump(model, f"./scripts/models/{config.model_name}_model.joblib")
+            print(f"Model {config.model_name} saved successfully.")
         
             return model
         
         elif config.model_name == 'RandomForestRegressor':
             model = RandomForestRegressorModel()
             model = model.train(X_train, y_train)
-        
+
+            dump(model, f"./scripts/models/{config.model_name}_model.joblib")
+            print(f"Model {config.model_name} saved successfully.")
+
             return model    
         
         else:

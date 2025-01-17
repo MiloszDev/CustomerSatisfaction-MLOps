@@ -5,7 +5,7 @@ from scripts.model_train import train_model
 from scripts.evaluation import evaluate_model
 from scripts.config import ModelNameConfig
 
-@pipeline(enable_cache=True)
+@pipeline(enable_cache=False)
 def train_pipeline(data_path: str) -> dict:
     """
     Train model pipeline that ingests, cleans, trains, and evaluates the model.
